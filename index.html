@@ -1,61 +1,192 @@
-// --- 核心邏輯：情緒與危機偵測 ---
-function processFeedback(mood, desc) {
-    // 1. 定義危險關鍵字
-    const dangerWords = ["自殺", "想死", "離開世界", "解脫", "沒意義", "絕望", "痛苦到極點"];
-    const isCrisis = dangerWords.some(word => desc.includes(word));
-
-    if (isCrisis) {
-        // 觸發防自殺與深度關懷機制
-        return {
-            title: "💡 溫暖的小提醒",
-            text: "看見你這幅畫，能感受到你現在承受著很大的重量... 辛苦你了。這份情緒是真實的，但也請記得，你並不孤單。試著傳個訊息給最信任的朋友，或是撥打 1925 (依政府熱線)，讓有人能陪你分擔這一刻。你的生命如同你選的顏色一樣，有無窮的可能性。",
-            style: "border-left: 8px solid #ff7675; background: #fff5f5;"
-        };
-    }
-
-    // 2. 一般激勵機制 (AI 回饋組)
-    const normalizedFeedbacks = {
-        "喜": "這抹色彩真耀眼！你的筆觸像是帶著笑意在跳舞，連螢幕前的我也感受到這份能量了呢！☀️",
-        "怒": "很有張力的表達！你成功把那種噴發的能量轉化為視覺藝術，這是一個超棒的抒發過程！🔥",
-        "哀": "這幅畫有種靜謐的美。雖然線條帶著淡淡的憂傷，但也是在溫柔地擁抱內心的自己。抱一個，你做得很棒。🕯️",
-        "樂": "太燦爛了！這種構圖讓人看了心情也跟著輕快起來。謝謝你分享這麼美好的視覺節奏！🌈"
-    };
-
-    return {
-        title: "🌟 AI 觀察筆記",
-        text: normalizedFeedbacks[mood] || "你的表達很有獨特性！",
-        style: "border-left: 8px solid #f1c40f; background: #fff9db;"
-    };
-}
-
-// --- 更新後的跳轉邏輯 ---
-function nextStep() {
-    const sid = document.getElementById('sid').value;
-    const age = document.getElementById('age').value;
-    const desc = document.getElementById('mood-desc').value.trim();
-
-    if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完成所有填寫與繪圖！");
-
-    const currentMood = moods[step];
-    const fbData = processFeedback(currentMood, desc);
-
-    finalData.push({
-        id: sid, age: age, gender: document.getElementById('gender').value,
-        group: document.getElementById('group-type').value,
-        mood_tag: currentMood, color_h: document.getElementById('colorSlider').value,
-        description: desc, time: Math.round((Date.now()-startTime)/1000)+"s",
-        image: canvas.toDataURL('image/jpeg', 0.5)
-    });
-
-    if (document.getElementById('group-type').value === "AI") {
-        const fbBox = document.getElementById('feedback-box');
-        document.getElementById('fb-title').innerText = fbData.title;
-        document.getElementById('fb-text').innerText = fbData.text;
-        fbBox.style.cssText += fbData.style; // 套用特殊樣式
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>情緒視覺實驗室 V7.0</title>
+    <style>
+        :root { --primary: #6c5ce7; --bg: #f8f9fa; }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        .setup-ui { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #f0f0f0; border-radius: 12px; outline: none; }
+        .mood-tag { font-size: 28px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; }
         
-        document.getElementById('overlay').style.display = "block";
-        fbBox.style.display = "block";
-    } else {
-        processNext(); 
-    }
-}
+        /* 標準化色相滑軌 */
+        .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
+        .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        #colorSlider { 
+            flex: 1; -webkit-appearance: none; height: 12px; border-radius: 10px; 
+            background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000); 
+        }
+        #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: white; border: 3px solid #333; border-radius: 50%; }
+
+        .canvas-container { position: relative; border: 2px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; }
+        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; }
+        .toolbar { display: flex; padding: 10px; background: #fafafa; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
+        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 10px; }
+        
+        /* AI 回饋彈窗 */
+        #fb-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99; }
+        #fb-box { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 450px; background: white; padding: 30px; border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="fb-overlay"></div>
+    <div id="fb-box">
+        <h3 id="fb-title">🌟 AI 鼓勵師</h3>
+        <p id="fb-text" style="line-height:1.6; color:#444;"></p>
+        <button onclick="closeFB()" class="btn-next">收到，下一關！</button>
+    </div>
+
+    <div class="card">
+        <div id="setup-group" class="setup-ui">
+            <input type="text" id="sid" placeholder="學號" style="flex:2;">
+            <input type="number" id="age" placeholder="年齡" style="flex:1;">
+            <select id="gender"><option value="女">女</option><option value="男">男</option></select>
+            <select id="exp-group" style="background:#edf2ff; font-weight:bold;">
+                <option value="AI">AI 激勵組</option>
+                <option value="Control">控制組 (純紀錄)</option>
+            </select>
+        </div>
+
+        <div class="mood-tag" id="mood-label">心情：喜</div>
+
+        <div class="controls-group">
+            <div class="control-item">
+                <span style="font-size:12px; width:50px;">色相角</span>
+                <input type="range" id="colorSlider" min="0" max="330" step="30" value="0" oninput="updateBrush()">
+            </div>
+            <div class="control-item">
+                <span style="font-size:12px; width:50px;">大小</span>
+                <input type="range" id="sizeSlider" min="2" max="30" value="4" oninput="updateBrush()" style="flex:1;">
+                <div style="width:30px; display:flex; justify-content:center;"><div id="brushInd"></div></div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <div class="toolbar">
+                <button onclick="undo()" style="border:none; background:#eee; padding:5px 12px; border-radius:10px; cursor:pointer;">⬅️ 復原</button>
+                <span id="color-info" style="font-size:12px; color:#888;">H: 0° (紅)</span>
+                <button onclick="clearCanvas()" style="border:none; background:#eee; padding:5px 12px; border-radius:10px; cursor:pointer;">♻️ 全清</button>
+            </div>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <textarea id="mood-desc" rows="2" placeholder="為什麼這樣畫？寫下你的想法..." style="width:100%; margin-top:10px;"></textarea>
+        <button class="btn-next" id="action-btn" onclick="checkAndNext()">保存並繼續 (1/4) ✨</button>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "你的網址"; // 請替換成你的 Google Script URL
+        const moods = ["喜", "怒", "哀", "樂"];
+        let step = 0, finalData = [], startTime = Date.now(), curColor = "red", curSize = 4, history = [], hasDrawn = false, drawing = false;
+
+        const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
+
+        function updateBrush() {
+            const h = document.getElementById('colorSlider').value;
+            curSize = document.getElementById('sizeSlider').value;
+            curColor = `hsl(${h}, 70%, 50%)`;
+            brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`;
+            document.getElementById('color-info').innerText = `H: ${h}°`;
+        }
+
+        // 初始化畫布與觸控
+        function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.width * 0.75; clearCanvas(); }
+        window.addEventListener('resize', resize); setTimeout(resize, 100);
+        function clearCanvas() { ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width,canvas.height); save(); hasDrawn=false; }
+        function save() { history.push(canvas.toDataURL()); if(history.length>10) history.shift(); }
+        function undo() { if(history.length>1) { history.pop(); let img=new Image(); img.src=history[history.length-1]; img.onload=()=>ctx.drawImage(img,0,0); } }
+
+        function getPos(e) { 
+            const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e;
+            return { x: c.clientX - r.left, y: c.clientY - r.top }; 
+        }
+        canvas.addEventListener('mousedown', start); canvas.addEventListener('touchstart', (e)=>{start(e); e.preventDefault();}, {passive:false});
+        function start(e) { drawing=true; hasDrawn=true; const {x,y}=getPos(e); ctx.beginPath(); ctx.moveTo(x,y); }
+        canvas.addEventListener('mousemove', move); canvas.addEventListener('touchmove', (e)=>{move(e); e.preventDefault();}, {passive:false});
+        function move(e) { if(!drawing) return; const {x,y}=getPos(e); ctx.lineTo(x,y); ctx.strokeStyle=curColor; ctx.lineWidth=curSize; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(); }
+        window.addEventListener('mouseup', ()=>{if(drawing)save(); drawing=false;});
+        window.addEventListener('touchend', ()=>{if(drawing)save(); drawing=false;});
+
+        // --- AI 回復與危機偵測邏輯 ---
+        function getAIResponse(mood, desc) {
+            const dangerWords = ["自殺", "想死", "離開", "解脫", "沒意義", "絕望", "痛苦到極點", "自殘"];
+            if (dangerWords.some(w => desc.includes(w))) {
+                return {
+                    title: "💡 溫暖的擁抱",
+                    text: "看見這幅畫，能感受到你現在承受著沉重的負擔...辛苦你了。你的感受非常重要，但也請記得你並不孤單。試著找好朋友聊聊，或撥打 1925 安心專線。你的色彩對這世界而言是獨一無二的。",
+                    color: "#ff7675"
+                };
+            }
+            const normal = {
+                "喜": "這線條充滿活力！我看見了色彩在跳舞，這份快樂很有感染力喔！✨",
+                "怒": "很有張力的表達！你成功把內在的能量視覺化了，這是很棒的抒發！🔥",
+                "哀": "這幅畫有種安靜的深度。雖然帶著憂慮，但每一筆都在溫柔擁抱你自己。你做得很棒。🕯️",
+                "樂": "太燦爛了！這種明亮的視覺節奏讓人感到非常輕快，謝謝你的分享！🌈"
+            };
+            return { title: "🌟 AI 觀察筆記", text: normal[mood], color: "#f1c40f" };
+        }
+
+        function checkAndNext() {
+            const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value;
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並繪圖！");
+
+            const isAI = document.getElementById('exp-group').value === "AI";
+            const response = getAIResponse(moods[step], desc);
+
+            finalData.push({
+                id: sid, age: age, gender: document.getElementById('gender').value,
+                group: document.getElementById('exp-group').value,
+                mood: moods[step], color_h: document.getElementById('colorSlider').value,
+                desc: desc, time: Math.round((Date.now()-startTime)/1000)+"s",
+                image: canvas.toDataURL('image/jpeg', 0.5)
+            });
+
+            if (isAI) {
+                document.getElementById('fb-title').innerText = response.title;
+                document.getElementById('fb-text').innerText = response.text;
+                document.getElementById('fb-box').style.borderTop = `8px solid ${response.color}`;
+                document.getElementById('fb-overlay').style.display = "block";
+                document.getElementById('fb-box').style.display = "block";
+            } else {
+                goNext();
+            }
+        }
+
+        function closeFB() {
+            document.getElementById('fb-overlay').style.display = "none";
+            document.getElementById('fb-box').style.display = "none";
+            goNext();
+        }
+
+        function goNext() {
+            if(step < 3) {
+                step++; startTime = Date.now();
+                document.getElementById('mood-label').innerText = "心情：" + moods[step];
+                document.getElementById('setup-group').style.visibility = "hidden";
+                document.getElementById('mood-desc').value = "";
+                document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4)`;
+                clearCanvas(); history=[]; save();
+            } else {
+                submit();
+            }
+        }
+
+        async function submit() {
+            const btn = document.getElementById('action-btn');
+            btn.disabled = true; btn.innerText = "正在飛速傳送數據...";
+            for(let d of finalData) { await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(d)}); }
+            alert("實驗數據已全數成功同步！感謝參與。");
+            location.reload();
+        }
+        updateBrush();
+    </script>
+</body>
+</html>
