@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>情緒視覺實驗室</title>
+    <title>情緒視覺實驗室 V13.0</title>
     <style>
         :root { --primary: #6c5ce7; --bg: #f4f7f6; --danger: #d63031; --warning: #f1c40f; }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         .setup-ui { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; }
+        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; width: 100%; }
+        .setup-ui input, .setup-ui select { width: auto; }
         .mood-tag { font-size: 32px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 5px; }
         .timer-info { text-align: center; font-size: 12px; color: #aaa; margin-bottom: 10px; font-family: monospace; }
         .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
@@ -32,7 +33,7 @@
     <div id="fb-overlay"></div>
     <div id="fb-box">
         <h3 id="fb-title">🌟 AI 鼓勵師</h3>
-        <p id="fb-text"></p>
+        <p id="fb-text" style="font-size: 17px; line-height: 1.6; color: #333;"></p>
         <button onclick="closeFB()" class="btn-next">收到，下一關！🚀</button>
     </div>
 
@@ -48,15 +49,15 @@
         </div>
 
         <div class="mood-tag" id="mood-label">心情：喜</div>
-        <div class="timer-info" id="timer-display">計時中...</div>
+        <div class="timer-info" id="timer-display">本關用時：0 秒</div>
 
         <div class="controls-group">
             <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">色彩</span>
+                <span style="font-size:13px; font-weight:bold;">色彩選擇</span>
                 <input type="range" id="colorSlider" min="0" max="359" step="1" value="0" oninput="updateBrush()">
             </div>
             <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">筆觸</span>
+                <span style="font-size:13px; font-weight:bold;">筆觸粗細</span>
                 <input type="range" id="sizeSlider" min="2" max="35" value="5" oninput="updateBrush()" style="flex:1;">
                 <div style="width:40px; display:flex; justify-content:center;"><div id="brushInd"></div></div>
             </div>
@@ -71,21 +72,23 @@
             <canvas id="canvas"></canvas>
         </div>
 
-        <textarea id="mood-desc" rows="2" placeholder="為什麼這樣畫？寫下你的繪圖想法" style="width:100%; margin-top:15px;"></textarea>
+        <textarea id="mood-desc" rows="2" placeholder="為什麼這樣畫？寫下你的想法..." style="width:100%; margin-top:15px;"></textarea>
         <button class="btn-next" id="action-btn" onclick="checkAndNext()">保存並繼續 (1/4) ✨</button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwF-En5nWBBIe9H9uVsjhz3YTWFQEkwLm3RAAbsl7gNKdBHq5lbHc3FMy_wxOWLD2YLEQ/exec"; 
+        // 你的最新腳本 URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfUAZ7iG4Qw5EpL7orB5K_sTotc7gHg-dPux7Vr60Q4b6MPCMfuhP6ZztiHjg5XB_E8A/exec"; 
+        
         const moods = ["喜", "怒", "哀", "樂"];
         let step = 0, finalData = [], startTime = Date.now(), curColor = "#ff0000", curSize = 5, history = [], hasDrawn = false, drawing = false;
 
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
 
-        // 每秒更新一次顯示計時（選做，可增加實驗儀式感）
+        // 計時器顯示更新
         setInterval(() => {
             const sec = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('timer-display').innerText = `本關已用時：${sec} 秒`;
+            document.getElementById('timer-display').innerText = `本關用時：${sec} 秒`;
         }, 1000);
 
         function hslToHex(h, s, l) {
@@ -112,6 +115,7 @@
         function save() { history.push(canvas.toDataURL()); if(history.length>15) history.shift(); }
         function undo() { if(history.length>1) { history.pop(); let img=new Image(); img.src=history[history.length-1]; img.onload=()=>ctx.drawImage(img,0,0); } }
         function getPos(e) { const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e; return { x: c.clientX - r.left, y: c.clientY - r.top }; }
+        
         canvas.addEventListener('mousedown', start); canvas.addEventListener('touchstart', (e)=>{start(e); e.preventDefault();}, {passive:false});
         function start(e) { drawing=true; hasDrawn=true; const {x,y}=getPos(e); ctx.beginPath(); ctx.moveTo(x,y); }
         canvas.addEventListener('mousemove', move); canvas.addEventListener('touchmove', (e)=>{move(e); e.preventDefault();}, {passive:false});
@@ -121,9 +125,8 @@
 
         function checkAndNext() {
             const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value.trim();
-            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並完成繪圖！");
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫學號、年齡，並完成繪圖與想法說明！");
 
-            // 重要：計算這一關花了幾秒
             const timeElapsed = Math.round((Date.now() - startTime) / 1000);
 
             finalData.push({
@@ -133,12 +136,12 @@
                 color_hex: curColor,
                 color_h: document.getElementById('colorSlider').value,
                 desc: desc, 
-                time: timeElapsed, // 傳送純秒數數據
+                time: timeElapsed,
                 image: canvas.toDataURL('image/jpeg', 0.5)
             });
 
             if (document.getElementById('exp-group').value === "AI") {
-                const res = { "喜":"色彩很有活力！☀️", "怒":"爆發力十足！🔥", "哀":"深沈的觸動。🕯️", "樂":"明快而歡愉！🌈" };
+                const res = { "喜":"色彩很有活力！這份快樂很有感染力喔！☀️", "怒":"爆發力十足！你成功將情緒轉化為視覺筆觸了！🔥", "哀":"很安靜的表達。每一筆都在溫柔擁抱你自己。🕯️", "樂":"明快而歡愉！這幅畫讓看的人心情也跟著亮了起來！🌈" };
                 document.getElementById('fb-text').innerText = res[moods[step]];
                 document.getElementById('fb-overlay').style.display = "block";
                 document.getElementById('fb-box').style.display = "block";
@@ -146,10 +149,11 @@
         }
 
         function closeFB() { document.getElementById('fb-overlay').style.display = "none"; document.getElementById('fb-box').style.display = "none"; goNext(); }
+        
         function goNext() { 
             if(step < 3) { 
                 step++; 
-                startTime = Date.now(); // 重置下一關的起始時間
+                startTime = Date.now(); 
                 document.getElementById('mood-label').innerText = "心情：" + moods[step]; 
                 document.getElementById('mood-desc').value = ""; 
                 document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4) ✨`; 
@@ -158,9 +162,18 @@
         }
 
         async function submit() {
-            const btn = document.getElementById('action-btn'); btn.disabled = true; btn.innerText = "數據飛速同步中... 🚀";
-            for(let d of finalData) { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) }); }
-            alert("🎉 實驗已完成，時間數據已同步！"); location.reload();
+            const btn = document.getElementById('action-btn'); 
+            btn.disabled = true; btn.innerText = "數據飛速同步中... 🚀";
+            try {
+                for(let d of finalData) { 
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) }); 
+                }
+                alert("🎉 實驗數據已成功同步！感謝你的參與。"); 
+                location.reload();
+            } catch(e) {
+                alert("傳送發生錯誤，請檢查網路連接。");
+                btn.disabled = false;
+            }
         }
         updateBrush();
     </script>
