@@ -1,80 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>情緒視覺研究實驗室</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>情緒視覺實驗室</title>
     <style>
-        :root { --primary: #6c5ce7; --bg: #f1f3f6; }
-        body { font-family: "PingFang TC", sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 550px; }
+        :root { --primary: #6c5ce7; --bg: #f5f7fa; }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+        .card { 
+            background: white; 
+            width: 100%; 
+            max-width: 600px; /* 平板上的最大寬度 */
+            margin: 10px;
+            padding: 20px; 
+            border-radius: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
         
-        /* 進度條 */
-        .progress-bar { display: flex; margin-bottom: 20px; background: #eee; border-radius: 10px; height: 8px; }
+        .progress-bar { display: flex; background: #eee; border-radius: 10px; height: 6px; margin-bottom: 15px; }
         .progress-inner { background: var(--primary); width: 25%; transition: 0.5s; border-radius: 10px; }
         
-        .mood-tag { font-size: 26px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 15px; }
-        
-        /* 強化版色盤 */
-        .color-palette { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .color-dot { width: 35px; height: 35px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
-        .color-dot.active { border-color: #333; transform: scale(1.1); }
-        .custom-color { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #ddd; overflow: hidden; cursor: pointer; }
+        .setup-ui { display: flex; gap: 10px; margin-bottom: 15px; }
+        input, select, textarea { 
+            font-size: 16px !important; /* 防止 iOS 自動放大 */
+            padding: 12px; border: 2px solid #f0f0f0; border-radius: 12px; outline: none;
+        }
 
-        /* 畫布區域 */
-        .canvas-box { border: 3px solid #eee; border-radius: 20px; background: white; position: relative; overflow: hidden; }
+        .mood-tag { font-size: 24px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; }
+        
+        /* 針對手指設計的大色盤 */
+        .color-palette { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+        .color-dot.active { border-color: #333; transform: scale(1.1); }
+        .custom-color { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; }
+
+        /* 畫布區域：自適應寬度 */
+        .canvas-container { 
+            position: relative; 
+            border: 2px solid #eee; 
+            border-radius: 20px; 
+            background: white; 
+            overflow: hidden;
+            width: 100%;
+        }
         canvas { 
             display: block; 
             width: 100%; 
-            touch-action: none; 
-            /* 1. 修改畫筆圖標：使用一隻可愛的畫筆圖案 */
-            cursor: url('https://cdn-icons-png.flaticon.com/32/595/595582.png') 0 32, crosshair; 
+            height: auto; 
+            aspect-ratio: 4 / 3; /* 維持比例 */
+            cursor: crosshair;
+            touch-action: none; /* 關鍵：防止畫畫時螢幕滾動 */
         }
         
-        .toolbar { display: flex; padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; align-items: center; }
+        .toolbar { display: flex; padding: 10px; background: #f8f9fa; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
         
-        #mood-desc { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; margin: 15px 0; box-sizing: border-box; resize: none; font-size: 15px; outline: none; }
-        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        textarea { width: 100%; margin: 15px 0; resize: none; }
         
-        /* AI 回饋方框 */
-        #ai-res { display: none; margin-top: 20px; padding: 20px; background: #fff9db; border-radius: 15px; border-left: 6px solid #f1c40f; line-height: 1.6; }
+        .btn-next { 
+            width: 100%; padding: 18px; background: var(--primary); color: white; border: none; 
+            border-radius: 18px; cursor: pointer; font-weight: bold; font-size: 18px; 
+        }
+
+        #ai-res { 
+            display: none; margin-top: 20px; padding: 15px; background: #fff9db; 
+            border-radius: 15px; border-left: 5px solid #f1c40f; font-size: 14px; 
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="progress-bar"><div class="progress-inner" id="progress"></div></div>
         
-        <div id="setup-ui" style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" id="sid" placeholder="輸入學號" style="flex:2; padding:10px; border-radius:10px; border:1px solid #eee;">
-            <select id="gender" style="flex:1; padding:10px; border-radius:10px; border:1px solid #eee;">
+        <div id="setup-group" class="setup-ui">
+            <input type="text" id="sid" placeholder="學號" style="flex:2;">
+            <select id="gender" style="flex:1;">
                 <option value="女">女</option>
                 <option value="男">男</option>
             </select>
         </div>
 
-        <div class="mood-tag" id="mood-label">喜</div>
+        <div class="mood-tag" id="mood-label">心情：喜</div>
 
-        <div class="color-palette" id="palette">
+        <div class="color-palette">
             <div class="color-dot active" style="background:#ff7675;" onclick="pickColor('#ff7675', this)"></div>
             <div class="color-dot" style="background:#fdcb6e;" onclick="pickColor('#fdcb6e', this)"></div>
             <div class="color-dot" style="background:#55efc4;" onclick="pickColor('#55efc4', this)"></div>
             <div class="color-dot" style="background:#74b9ff;" onclick="pickColor('#74b9ff', this)"></div>
-            <div class="color-dot" style="background:#a29bfe;" onclick="pickColor('#a29bfe', this)"></div>
             <div class="color-dot" style="background:#2d3436;" onclick="pickColor('#2d3436', this)"></div>
-            <input type="color" id="customColorPicker" class="custom-color" onchange="pickColor(this.value, this)">
+            <input type="color" id="customColor" class="custom-color" onchange="pickColor(this.value, this)">
         </div>
 
-        <div class="canvas-box">
+        <div class="canvas-container">
             <div class="toolbar">
-                <span style="font-size: 13px; color:#888;">請用線條或圖像描繪情緒...</span>
-                <button onclick="clearCanvas()" style="margin-left:auto; border:none; background:none; color:var(--primary); cursor:pointer;">♻️ 清空</button>
+                <span style="font-size: 12px; color:#888;">請畫出這個情緒的線條或圖像</span>
+                <button onclick="clearCanvas()" style="border:none; background:none; color:var(--primary); font-weight:bold;">♻️ 清空</button>
             </div>
-            <canvas id="canvas" width="490" height="350"></canvas>
+            <canvas id="canvas"></canvas>
         </div>
 
-        <textarea id="mood-desc" rows="2" placeholder="為什麼會畫這些線條或圖像呢？"></textarea>
+        <textarea id="mood-desc" rows="2" placeholder="為什麼畫這些線條？分享一下你的心情..."></textarea>
 
-        <button class="btn-next" id="action-btn" onclick="nextStep()">保存當前情緒，繼續 ✨</button>
-        
+        <button class="btn-next" id="action-btn" onclick="nextStep()">保存當前心情，繼續 ✨</button>
         <div id="ai-res"></div>
     </div>
 
@@ -97,35 +133,64 @@
         const ctx = canvas.getContext('2d');
         let drawing = false;
 
+        // 調整畫布實際像素大小
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientWidth * 0.75;
+            clearCanvas();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
+
         function clearCanvas() {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        clearCanvas();
 
         function pickColor(c, el) {
             selectedColor = c;
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            if(el.classList) el.classList.add('active');
+            if(el.classList && el.classList.contains('color-dot')) el.classList.add('active');
         }
 
-        canvas.addEventListener('mousedown', (e) => { 
+        // --- 觸控與滑鼠通用繪圖邏輯 ---
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - r.left, y: clientY - r.top };
+        }
+
+        function start(e) {
             drawing = true;
+            const { x, y } = getPos(e);
             ctx.beginPath();
-            const r = canvas.getBoundingClientRect();
-            ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
-        });
-        canvas.addEventListener('mousemove', (e) => {
+            ctx.moveTo(x, y);
+            e.preventDefault();
+        }
+
+        function move(e) {
             if(!drawing) return;
-            const r = canvas.getBoundingClientRect();
-            ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+            const { x, y } = getPos(e);
+            ctx.lineTo(x, y);
             ctx.strokeStyle = selectedColor;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke();
-        });
-        window.addEventListener('mouseup', () => drawing = false);
+            e.preventDefault();
+        }
+
+        function stop() { drawing = false; }
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', stop);
+        
+        canvas.addEventListener('touchstart', start, {passive: false});
+        canvas.addEventListener('touchmove', move, {passive: false});
+        canvas.addEventListener('touchend', stop);
 
         async function nextStep() {
             const sid = document.getElementById('sid').value;
@@ -141,16 +206,15 @@
                 color: selectedColor,
                 description: document.getElementById('mood-desc').value,
                 time_spent: duration + "s",
-                image: imageData,
-                ai_fb: aiFeedbacks[moods[step]]
+                image: imageData
             });
 
             if(step < 3) {
                 step++;
                 startTime = Date.now();
-                document.getElementById('mood-label').innerText = moods[step];
+                document.getElementById('mood-label').innerText = "心情：" + moods[step];
                 document.getElementById('progress').style.width = ((step + 1) * 25) + "%";
-                document.getElementById('setup-ui').style.visibility = "hidden";
+                document.getElementById('setup-group').style.display = "none";
                 document.getElementById('mood-desc').value = "";
                 clearCanvas();
                 if(step === 3) document.getElementById('action-btn').innerText = "送出所有實驗數據 ✨";
@@ -162,23 +226,16 @@
         async function submitFinal() {
             const btn = document.getElementById('action-btn');
             btn.disabled = true;
-            btn.innerText = "正在同步實驗數據... 🚀";
+            btn.innerText = "正在飛速同步... 🚀";
 
             for(let item of finalData) {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(item)
-                });
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
             }
 
-            // 顯示最終綜合 AI 回饋
             const aiRes = document.getElementById('ai-res');
             aiRes.style.display = "block";
-            aiRes.innerHTML = "<strong>【情緒調色盤總結】</strong><br>太棒了！你完成了一次深度的自我探索。你用繽紛的色彩與筆觸記錄了喜、怒、哀、樂。每一條曲線都是心靈的軌跡，老師會好好珍惜這些寶貴的數據！💖";
-            
-            btn.innerText = "實驗已全部完成！";
-            alert("提交成功！");
+            aiRes.innerHTML = "<strong>【實驗完成】</strong><br>你的情緒調色盤已成功上傳！感謝你用色彩與線條分享你的內心世界。";
+            btn.innerText = "感謝參與！";
         }
     </script>
 </body>
