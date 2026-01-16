@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>情緒視覺實驗室 V13.0</title>
+    <title>情緒視覺實驗室 V14.0</title>
     <style>
         :root { --primary: #6c5ce7; --bg: #f4f7f6; --danger: #d63031; --warning: #f1c40f; }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         .setup-ui { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; width: 100%; }
-        .setup-ui input, .setup-ui select { width: auto; }
+        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; }
         .mood-tag { font-size: 32px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 5px; }
-        .timer-info { text-align: center; font-size: 12px; color: #aaa; margin-bottom: 10px; font-family: monospace; }
+        .timer-info { text-align: center; font-size: 13px; color: #ff7675; font-weight: bold; margin-bottom: 10px; font-family: monospace; }
         .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
         .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
         #colorSlider { flex: 1; -webkit-appearance: none; height: 15px; border-radius: 10px; background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000); }
         #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: white; border: 4px solid #333; border-radius: 50%; }
-        .canvas-container { border: 3px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; }
+        .canvas-container { border: 3px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; position: relative; }
         canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
         .toolbar { display: flex; padding: 12px; background: #fafafa; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
-        .tool-btn { border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .tool-btn { border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .btn-undo { background: var(--warning); color: #444; }
         .btn-clear { background: var(--danger); color: white; }
         .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 15px; }
@@ -32,8 +31,8 @@
 <body>
     <div id="fb-overlay"></div>
     <div id="fb-box">
-        <h3 id="fb-title">🌟 AI 鼓勵師</h3>
-        <p id="fb-text" style="font-size: 17px; line-height: 1.6; color: #333;"></p>
+        <h3 id="fb-title">🌟 AI 觀察筆記</h3>
+        <p id="fb-text" style="font-size: 17px; line-height: 1.6;"></p>
         <button onclick="closeFB()" class="btn-next">收到，下一關！🚀</button>
     </div>
 
@@ -49,24 +48,24 @@
         </div>
 
         <div class="mood-tag" id="mood-label">心情：喜</div>
-        <div class="timer-info" id="timer-display">本關用時：0 秒</div>
+        <div class="timer-info" id="timer-display">⏱️ 本關用時：0 秒</div>
 
         <div class="controls-group">
             <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">色彩選擇</span>
+                <span style="font-size:13px; font-weight:bold;">色彩角度</span>
                 <input type="range" id="colorSlider" min="0" max="359" step="1" value="0" oninput="updateBrush()">
             </div>
             <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">筆觸粗細</span>
+                <span style="font-size:13px; font-weight:bold;">筆觸大小</span>
                 <input type="range" id="sizeSlider" min="2" max="35" value="5" oninput="updateBrush()" style="flex:1;">
-                <div style="width:40px; display:flex; justify-content:center;"><div id="brushInd"></div></div>
+                <div style="width:40px;"><div id="brushInd" style="margin:auto;"></div></div>
             </div>
         </div>
 
         <div class="canvas-container">
             <div class="toolbar">
                 <button class="tool-btn btn-undo" onclick="undo()">↩️ 復原</button>
-                <span id="color-info" style="font-size:12px; color:#555; font-family: monospace; font-weight: bold;">HEX: #FF0000 (0°)</span>
+                <span id="color-info" style="font-size:12px; color:#555; font-family: monospace;">HEX: #FF0000 (0°)</span>
                 <button class="tool-btn btn-clear" onclick="clearCanvas()">🗑️ 清空</button>
             </div>
             <canvas id="canvas"></canvas>
@@ -77,18 +76,17 @@
     </div>
 
     <script>
-        // 你的最新腳本 URL
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfUAZ7iG4Qw5EpL7orB5K_sTotc7gHg-dPux7Vr60Q4b6MPCMfuhP6ZztiHjg5XB_E8A/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIryKjrVd3q31vj56mEuiDF-jZj8QStlX41T6zLK7hdloQ4m6TKcu0nX66vA2Eo6xqUQ/exec"; 
         
         const moods = ["喜", "怒", "哀", "樂"];
         let step = 0, finalData = [], startTime = Date.now(), curColor = "#ff0000", curSize = 5, history = [], hasDrawn = false, drawing = false;
 
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
 
-        // 計時器顯示更新
+        // 每秒更新一次顯示
         setInterval(() => {
             const sec = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('timer-display').innerText = `本關用時：${sec} 秒`;
+            document.getElementById('timer-display').innerText = `⏱️ 本關用時：${sec} 秒`;
         }, 1000);
 
         function hslToHex(h, s, l) {
@@ -125,23 +123,29 @@
 
         function checkAndNext() {
             const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value.trim();
-            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫學號、年齡，並完成繪圖與想法說明！");
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請填寫基本資料並完成繪圖！");
 
-            const timeElapsed = Math.round((Date.now() - startTime) / 1000);
+            // 捕捉當前用時
+            const currentDuration = Math.floor((Date.now() - startTime) / 1000);
 
-            finalData.push({
-                id: sid, age: age, gender: document.getElementById('gender').value,
+            // 打包當前這一關的數據
+            const roundData = {
+                id: sid, 
+                age: age, 
+                gender: document.getElementById('gender').value,
                 group: document.getElementById('exp-group').value,
                 mood: moods[step], 
                 color_hex: curColor,
                 color_h: document.getElementById('colorSlider').value,
                 desc: desc, 
-                time: timeElapsed,
+                time: currentDuration, // 確實存入 time 變數
                 image: canvas.toDataURL('image/jpeg', 0.5)
-            });
+            };
+            
+            finalData.push(roundData);
 
             if (document.getElementById('exp-group').value === "AI") {
-                const res = { "喜":"色彩很有活力！這份快樂很有感染力喔！☀️", "怒":"爆發力十足！你成功將情緒轉化為視覺筆觸了！🔥", "哀":"很安靜的表達。每一筆都在溫柔擁抱你自己。🕯️", "樂":"明快而歡愉！這幅畫讓看的人心情也跟著亮了起來！🌈" };
+                const res = { "喜":"色彩很有活力的樣子！☀️", "怒":"筆觸很有爆發力！🔥", "哀":"感受到一份平靜。🕯️", "樂":"心情也跟著明亮了！🌈" };
                 document.getElementById('fb-text').innerText = res[moods[step]];
                 document.getElementById('fb-overlay').style.display = "block";
                 document.getElementById('fb-box').style.display = "block";
@@ -153,7 +157,7 @@
         function goNext() { 
             if(step < 3) { 
                 step++; 
-                startTime = Date.now(); 
+                startTime = Date.now(); // 重置下一關時間
                 document.getElementById('mood-label').innerText = "心情：" + moods[step]; 
                 document.getElementById('mood-desc').value = ""; 
                 document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4) ✨`; 
@@ -163,15 +167,21 @@
 
         async function submit() {
             const btn = document.getElementById('action-btn'); 
-            btn.disabled = true; btn.innerText = "數據飛速同步中... 🚀";
+            btn.disabled = true; btn.innerText = "數據飛速傳送中... 🚀";
             try {
+                // 逐筆發送 finalData 陣列中的四組數據
                 for(let d of finalData) { 
-                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) }); 
+                    await fetch(SCRIPT_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(d) 
+                    }); 
                 }
-                alert("🎉 實驗數據已成功同步！感謝你的參與。"); 
+                alert("🎉 數據（含繪製時間）已全部同步至 Google 表格！"); 
                 location.reload();
             } catch(e) {
-                alert("傳送發生錯誤，請檢查網路連接。");
+                alert("傳送失敗，請檢查網路！");
                 btn.disabled = false;
             }
         }
