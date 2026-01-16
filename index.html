@@ -3,89 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>情緒視覺實驗室 V16.0</title>
+    <title>情緒視覺實驗室 V18.0 - 行為追蹤版</title>
     <style>
         :root { --primary: #6c5ce7; --bg: #f4f7f6; --danger: #d63031; --warning: #f1c40f; }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .setup-ui { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .setup-ui { display: flex; gap: 8px; margin-bottom: 10px; }
         input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; width: 100%; }
-        .setup-ui input, .setup-ui select { width: auto; }
-        .mood-tag { font-size: 32px; font-weight: bold; color: var(--primary); text-align: center; }
-        .timer-info { text-align: center; font-size: 13px; color: #ff7675; font-weight: bold; margin-bottom: 10px; }
-        .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
-        .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
-        #colorSlider { flex: 1; -webkit-appearance: none; height: 15px; border-radius: 10px; background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000); }
-        #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: white; border: 4px solid #333; border-radius: 50%; }
-        .canvas-container { border: 3px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; }
-        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
-        .toolbar { display: flex; padding: 12px; background: #fafafa; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
-        .tool-btn { border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .btn-undo { background: var(--warning); color: #444; }
-        .btn-clear { background: var(--danger); color: white; }
-        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 15px; }
-        #fb-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:99; backdrop-filter: blur(3px); }
-        #fb-box { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 450px; background: white; padding: 30px; border-radius: 25px; text-align: center; z-index: 100; }
+        .setup-ui input { flex: 1; }
+        .mood-tag { font-size: 28px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .timer-info { text-align: center; font-size: 14px; color: #ff7675; font-weight: bold; margin-bottom: 10px; }
+        .controls-group { background: #f9f9f9; padding: 12px; border-radius: 15px; margin-bottom: 10px; }
+        #colorSlider { width: 100%; height: 15px; border-radius: 10px; -webkit-appearance: none; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); margin: 10px 0; }
+        #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: white; border: 3px solid #333; border-radius: 50%; }
+        .canvas-container { border: 2px solid #eee; border-radius: 15px; background: white; overflow: hidden; }
+        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; }
+        .toolbar { display: flex; padding: 10px; background: #fff; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
+        .tool-btn { border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <div id="fb-overlay"></div>
-    <div id="fb-box">
-        <h3 id="fb-title">🌟 AI 鼓勵師</h3>
-        <p id="fb-text"></p>
-        <button onclick="closeFB()" class="btn-next">收到，下一關！🚀</button>
-    </div>
-
     <div class="card">
         <div class="setup-ui">
             <input type="text" id="sid" placeholder="學號">
             <input type="number" id="age" placeholder="年齡">
-            <select id="gender"><option value="女">女</option><option value="男">男</option></select>
-            <select id="exp-group" style="background:#edf2ff; font-weight:bold;">
-                <option value="AI">AI 激勵組</option>
-                <option value="Control">控制組</option>
-            </select>
+            <select id="exp-group"><option value="AI">AI組</option><option value="Control">控制組</option></select>
         </div>
 
         <div class="mood-tag" id="mood-label">心情：喜</div>
-        <div class="timer-info" id="timer-display">🎨 實際繪製用時：0.0 秒</div>
+        <div class="timer-info" id="timer-display">🎨 累計繪製：0.0s | 步驟：0</div>
 
         <div class="controls-group">
-            <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">色彩</span>
-                <input type="range" id="colorSlider" min="0" max="359" value="0" oninput="updateBrush()">
-            </div>
-            <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">筆觸</span>
-                <input type="range" id="sizeSlider" min="2" max="35" value="5" oninput="updateBrush()" style="flex:1;">
-                <div id="brushInd" style="margin-left:10px;"></div>
+            <input type="range" id="colorSlider" min="0" max="359" value="0" oninput="updateBrush()">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="range" id="sizeSlider" min="2" max="30" value="5" oninput="updateBrush()">
+                <div id="brushInd" style="width:20px; height:20px; border-radius:50%; background:red;"></div>
             </div>
         </div>
 
         <div class="canvas-container">
             <div class="toolbar">
-                <button class="tool-btn btn-undo" onclick="undo()">↩️</button>
-                <span id="color-info" style="font-size:12px; color:#555; font-family: monospace;">HEX: #FF0000</span>
-                <button class="tool-btn btn-clear" onclick="clearCanvas()">🗑️</button>
+                <button class="tool-btn" onclick="undo()" style="background:var(--warning)">↩️ 復原</button>
+                <span id="color-info" style="font-size:12px; font-family:monospace;">#FF0000</span>
+                <button class="tool-btn" onclick="clearCanvas()" style="background:var(--danger); color:white">🗑️ 清空</button>
             </div>
             <canvas id="canvas"></canvas>
         </div>
 
-        <textarea id="mood-desc" rows="2" placeholder="請填寫你的創作想法..." style="margin-top:15px;"></textarea>
+        <textarea id="mood-desc" rows="2" placeholder="為什麼這樣畫？寫下你的想法..." style="margin-top:10px;"></textarea>
         <button class="btn-next" id="action-btn" onclick="checkAndNext()">保存並繼續 (1/4)</button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEX80sYlgXPBroQhyMKyME-2w_lhaig667yeTf94hV1BUDER6ZULKuw5fWc8IKZWURzA/exec"; 
+        const SCRIPT_URL = "你的_GAS_網址"; 
         const moods = ["喜", "怒", "哀", "樂"];
-        
         let step = 0, finalData = [];
-        let curColor = "#ff0000", curSize = 5, history = [], hasDrawn = false, drawing = false;
+        let curColor = "#FF0000", curSize = 5, history = [], drawing = false, hasDrawn = false;
         
-        // 核心計時：activeTime 只累計「動筆」的時間
-        let activeTime = 0; 
-        let lastTimestamp = 0;
+        // --- 行為數據追蹤變數 ---
+        let activeTime = 0;      // 總繪圖秒數
+        let lastTimestamp = 0;   // 上次計時點
+        let drawingSteps = [];   // 紀錄每個動作：{ time: 秒, color: 色碼, size: 粗細 }
 
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
 
@@ -103,38 +83,54 @@
             const h = document.getElementById('colorSlider').value;
             curSize = document.getElementById('sizeSlider').value;
             curColor = hslToHex(parseInt(h), 100, 50);
-            brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`;
-            document.getElementById('color-info').innerText = `HEX: ${curColor} (${h}°)`;
+            brushInd.style.backgroundColor = curColor;
+            brushInd.style.width = curSize + 'px';
+            brushInd.style.height = curSize + 'px';
+            document.getElementById('color-info').innerText = curColor;
         }
 
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.width * 0.75; clearCanvas(); }
         window.addEventListener('resize', resize); setTimeout(resize, 100);
-        function clearCanvas() { ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width,canvas.height); save(); hasDrawn=false; activeTime=0; updateTimerDisplay(); }
-        function save() { history.push(canvas.toDataURL()); if(history.length>15) history.shift(); }
+        
+        function clearCanvas() { 
+            ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width,canvas.height); 
+            saveHistory(); hasDrawn=false; activeTime=0; drawingSteps=[]; updateDisplay(); 
+        }
+
+        function saveHistory() { history.push(canvas.toDataURL()); if(history.length>10) history.shift(); }
         function undo() { if(history.length>1) { history.pop(); let img=new Image(); img.src=history[history.length-1]; img.onload=()=>ctx.drawImage(img,0,0); } }
         function getPos(e) { const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e; return { x: c.clientX - r.left, y: c.clientY - r.top }; }
         
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('touchstart', (e)=>{startDrawing(e); e.preventDefault();}, {passive:false});
-
-        function startDrawing(e) {
-            drawing = true;
-            hasDrawn = true;
+        // 繪製開始：記錄一個「新步驟」
+        canvas.addEventListener('mousedown', startD);
+        canvas.addEventListener('touchstart', (e)=>{startD(e); e.preventDefault();}, {passive:false});
+        function startD(e) {
+            drawing = true; hasDrawn = true;
             lastTimestamp = Date.now();
-            const {x,y} = getPos(e);
+            
+            // 紀錄步驟：在什麼時間點，用了什麼顏色和粗細
+            drawingSteps.push({
+                at_sec: activeTime.toFixed(1),
+                color: curColor,
+                size: curSize
+            });
+            updateDisplay();
+
             ctx.beginPath();
+            const {x,y} = getPos(e);
             ctx.moveTo(x,y);
         }
 
-        canvas.addEventListener('mousemove', moveDrawing);
-        canvas.addEventListener('touchmove', (e)=>{moveDrawing(e); e.preventDefault();}, {passive:false});
-
-        function moveDrawing(e) {
+        // 繪製中：累加時間
+        canvas.addEventListener('mousemove', moveD);
+        canvas.addEventListener('touchmove', (e)=>{moveD(e); e.preventDefault();}, {passive:false});
+        function moveD(e) {
             if(!drawing) return;
             const now = Date.now();
             activeTime += (now - lastTimestamp) / 1000;
             lastTimestamp = now;
-            updateTimerDisplay();
+            updateDisplay();
+
             const {x,y} = getPos(e);
             ctx.lineTo(x,y);
             ctx.strokeStyle = curColor;
@@ -143,61 +139,44 @@
             ctx.stroke();
         }
 
-        window.addEventListener('mouseup', ()=>{ if(drawing) save(); drawing = false; });
-        window.addEventListener('touchend', ()=>{ if(drawing) save(); drawing = false; });
+        window.addEventListener('mouseup', ()=>{ if(drawing) saveHistory(); drawing = false; });
+        window.addEventListener('touchend', ()=>{ if(drawing) saveHistory(); drawing = false; });
 
-        function updateTimerDisplay() {
-            document.getElementById('timer-display').innerText = `🎨 實際繪製用時：${activeTime.toFixed(1)} 秒`;
+        function updateDisplay() {
+            document.getElementById('timer-display').innerText = `🎨 累計繪製：${activeTime.toFixed(1)}s | 步驟：${drawingSteps.length}`;
         }
 
         function checkAndNext() {
             const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value.trim();
-            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並完成繪圖！");
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請填寫資料、描述並完成繪圖！");
 
-            // 打包數據：這裡的 draw_time 必須與 GAS 對齊
             finalData.push({
-                id: sid, age: age, gender: document.getElementById('gender').value,
-                group: document.getElementById('exp-group').value,
+                id: sid, age: age, gender: "N/A", group: document.getElementById('exp-group').value,
                 mood: moods[step], 
-                color_hex: curColor,
-                color_h: document.getElementById('colorSlider').value,
+                draw_time: activeTime.toFixed(1),
+                steps: drawingSteps, // 包含所有顏色變換與下筆時機的詳細清單
                 desc: desc, 
-                draw_time: activeTime.toFixed(1), // <--- 傳送這個
                 image: canvas.toDataURL('image/jpeg', 0.5)
             });
 
-            if (document.getElementById('exp-group').value === "AI") {
-                const res = { "喜":"色彩很有活力！☀️", "怒":"很有爆發力！🔥", "哀":"安靜的力量。🕯️", "樂":"心情變好了！🌈" };
-                document.getElementById('fb-text').innerText = res[moods[step]];
-                document.getElementById('fb-overlay').style.display = "block";
-                document.getElementById('fb-box').style.display = "block";
-            } else { goNext(); }
-        }
-
-        function closeFB() { document.getElementById('fb-overlay').style.display = "none"; document.getElementById('fb-box').style.display = "none"; goNext(); }
-        function goNext() { 
-            if(step < 3) { 
-                step++; activeTime = 0; 
-                document.getElementById('mood-label').innerText = "心情：" + moods[step]; 
-                document.getElementById('mood-desc').value = ""; 
-                document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4)`; 
-                clearCanvas(); history=[]; save(); updateTimerDisplay();
-            } else { submit(); } 
+            if(step < 3) {
+                step++; activeTime = 0; drawingSteps = [];
+                document.getElementById('mood-label').innerText = "心情：" + moods[step];
+                document.getElementById('mood-desc').value = "";
+                document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4)`;
+                clearCanvas();
+            } else { submit(); }
         }
 
         async function submit() {
-            const btn = document.getElementById('action-btn'); 
-            btn.disabled = true; btn.innerText = "正在儲存... 🚀";
+            const btn = document.getElementById('action-btn'); btn.disabled = true; btn.innerText = "正在上傳行為數據...";
             try {
-                for(let d of finalData) { 
-                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) }); 
+                for(let d of finalData) {
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
                 }
-                alert("🎉 實驗完成！繪製用時已完整紀錄。"); 
+                alert("✨ 數據同步成功！包含所有繪圖步驟與色彩順序。");
                 location.reload();
-            } catch(e) {
-                alert("儲存失敗！");
-                btn.disabled = false;
-            }
+            } catch(e) { alert("上傳失敗"); btn.disabled = false; }
         }
         updateBrush();
     </script>
