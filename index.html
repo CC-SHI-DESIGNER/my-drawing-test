@@ -3,97 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>情緒實驗 - 激勵組</title>
+    <title>情緒視覺實驗室 V10.0</title>
     <style>
-        :root { --primary: #6c5ce7; --bg: #f8f9fa; --danger: #eb4d4b; --warning: #f9ca24; }
+        :root { --primary: #6c5ce7; --bg: #f4f7f6; --danger: #d63031; --warning: #f1c40f; }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         .setup-ui { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; }
         .mood-tag { font-size: 32px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; }
-        .controls-group { background: #fafafa; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
-        .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+        .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
+        .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        
+        /* 色彩滑軌 */
         #colorSlider { 
-            flex: 1; -webkit-appearance: none; height: 18px; border-radius: 10px; 
-            background: linear-gradient(to right, #f00 0%, #ff8000 8.3%, #ff0 16.6%, #80ff00 25%, #0f0 33.3%, #00ff80 41.6%, #0ff 50%, #0080ff 58.3%, #00f 66.6%, #8000ff 75%, #f0f 83.3%, #ff0080 91.6%, #f00 100%); 
+            flex: 1; -webkit-appearance: none; height: 15px; border-radius: 10px; 
+            background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000); 
         }
-        #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: white; border: 5px solid #333; border-radius: 50%; }
-        .canvas-container { border: 3px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; position: relative; }
-        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; background: white; }
-        .toolbar { display: flex; padding: 12px; background: #fdfdfd; border-bottom: 1px solid #eee; justify-content: space-between; }
-        .tool-btn { border: none; padding: 12px 18px; border-radius: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: 0.1s; }
-        .btn-undo { background: var(--warning); color: #574b10; border-bottom: 4px solid #d4ac0d; }
-        .btn-clear { background: var(--danger); color: white; border-bottom: 4px solid #c0392b; }
-        .tool-btn:active { transform: translateY(3px); border-bottom-width: 1px; }
-        .btn-next { width: 100%; padding: 20px; background: var(--primary); color: white; border: none; border-radius: 22px; cursor: pointer; font-weight: bold; font-size: 20px; margin-top: 15px; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3); }
-        #fb-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99; backdrop-filter: blur(5px); }
-        #fb-box { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 450px; background: white; padding: 35px; border-radius: 30px; text-align: center; z-index: 100; }
+        #colorSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: white; border: 4px solid #333; border-radius: 50%; }
+
+        .canvas-container { position: relative; border: 3px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; }
+        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
+        .toolbar { display: flex; padding: 12px; background: #fafafa; border-bottom: 1px solid #eee; justify-content: space-between; align-items: center; }
+        .tool-btn { border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-undo { background: var(--warning); color: #444; }
+        .btn-clear { background: var(--danger); color: white; }
+        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 15px; }
+
+        #fb-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:99; backdrop-filter: blur(3px); }
+        #fb-box { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 450px; background: white; padding: 30px; border-radius: 25px; text-align: center; z-index: 100; }
     </style>
 </head>
 <body>
     <div id="fb-overlay"></div>
     <div id="fb-box">
-        <h2 id="fb-title">🌟 AI 鼓勵師</h2>
-        <p id="fb-text" style="font-size: 18px; line-height:1.6; color:#444; margin: 20px 0;"></p>
+        <h3 id="fb-title">🌟 AI 鼓勵師</h3>
+        <p id="fb-text"></p>
         <button onclick="closeFB()" class="btn-next">收到，下一關！🚀</button>
     </div>
+
     <div class="card">
         <div id="setup-group" class="setup-ui">
             <input type="text" id="sid" placeholder="學號" style="flex:2;">
             <input type="number" id="age" placeholder="年齡" style="flex:1;">
             <select id="gender"><option value="女">女</option><option value="男">男</option></select>
+            <select id="exp-group" style="background:#edf2ff; font-weight:bold;">
+                <option value="AI">AI 激勵組</option>
+                <option value="Control">控制組</option>
+            </select>
         </div>
+
         <div class="mood-tag" id="mood-label">心情：喜</div>
+
         <div class="controls-group">
-            <div class="control-item"><span>色相統計</span><input type="range" id="colorSlider" min="0" max="330" step="30" value="0" oninput="updateBrush()"></div>
-            <div class="control-item"><span>筆觸大小</span><input type="range" id="sizeSlider" min="2" max="40" value="6" oninput="updateBrush()" style="flex:1;"><div id="brushInd"></div></div>
+            <div class="control-item">
+                <span style="font-size:13px; font-weight:bold;">選擇色彩</span>
+                <input type="range" id="colorSlider" min="0" max="359" step="1" value="0" oninput="updateBrush()">
+            </div>
+            <div class="control-item">
+                <span style="font-size:13px; font-weight:bold;">筆觸大小</span>
+                <input type="range" id="sizeSlider" min="2" max="35" value="5" oninput="updateBrush()" style="flex:1;">
+                <div style="width:40px; display:flex; justify-content:center;"><div id="brushInd"></div></div>
+            </div>
         </div>
+
         <div class="canvas-container">
             <div class="toolbar">
-                <button class="tool-btn btn-undo" onclick="undo()">↩️ 復原</button>
-                <span id="color-name" style="font-size:14px; font-weight:bold; color:#555;">紅 (0°)</span>
-                <button class="tool-btn btn-clear" onclick="clearCanvas()">🗑️ 全清</button>
+                <button class="tool-btn btn-undo" onclick="undo()">↩️ 復原一步</button>
+                <span id="color-info" style="font-size:12px; color:#888; font-family: monospace; font-weight: bold;">HEX: #FF0000 (0°)</span>
+                <button class="tool-btn btn-clear" onclick="clearCanvas()">🗑️ 全部清空</button>
             </div>
             <canvas id="canvas"></canvas>
         </div>
+
         <textarea id="mood-desc" rows="2" placeholder="為什麼這樣畫？寫下你的想法..." style="width:100%; margin-top:15px;"></textarea>
         <button class="btn-next" id="action-btn" onclick="checkAndNext()">保存並繼續 (1/4) ✨</button>
     </div>
+
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUFLqgSfGRL6pBE5qOR1EzSdPELMeoGEAIxlskAJuQIqacesVtMONHq62hP9OlUktHOg/exec"; 
-        const moods = ["喜", "怒", "哀", "樂"], colorNames = {0:"紅",30:"橙",60:"黃",90:"黃綠",120:"綠",150:"青綠",180:"青",210:"天藍",240:"藍",270:"藍紫",300:"紫",330:"玫瑰"};
-        let step = 0, finalData = [], startTime = Date.now(), curColor = "red", curSize = 6, history = [], hasDrawn = false, drawing = false;
+        const SCRIPT_URL = "你的腳本URL"; 
+        const moods = ["喜", "怒", "哀", "樂"];
+        let step = 0, finalData = [], startTime = Date.now(), curColor = "#ff0000", curSize = 5, history = [], hasDrawn = false, drawing = false;
+
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
-        function updateBrush() { const h = document.getElementById('colorSlider').value; curSize = document.getElementById('sizeSlider').value; curColor = `hsl(${h}, 85%, 50%)`; brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`; document.getElementById('color-name').innerText = `${colorNames[h]} (${h}°)`; }
+
+        // HSL 轉 HEX 的輔助函數，用於後台精確記錄
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+        }
+
+        function updateBrush() {
+            const h = document.getElementById('colorSlider').value;
+            curSize = document.getElementById('sizeSlider').value;
+            curColor = hslToHex(h, 100, 50); // 獲取 HEX 色碼
+            brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`;
+            document.getElementById('color-info').innerText = `HEX: ${curColor} (${h}°)`;
+        }
+
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.width * 0.75; clearCanvas(); }
         window.addEventListener('resize', resize); setTimeout(resize, 100);
         function clearCanvas() { ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width,canvas.height); save(); hasDrawn=false; }
         function save() { history.push(canvas.toDataURL()); if(history.length>15) history.shift(); }
         function undo() { if(history.length>1) { history.pop(); let img=new Image(); img.src=history[history.length-1]; img.onload=()=>ctx.drawImage(img,0,0); } }
-        function getPos(e) { const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e; return { x: c.clientX - r.left, y: c.clientY - r.top }; }
+
+        function getPos(e) { 
+            const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e;
+            return { x: c.clientX - r.left, y: c.clientY - r.top }; 
+        }
         canvas.addEventListener('mousedown', start); canvas.addEventListener('touchstart', (e)=>{start(e); e.preventDefault();}, {passive:false});
         function start(e) { drawing=true; hasDrawn=true; const {x,y}=getPos(e); ctx.beginPath(); ctx.moveTo(x,y); }
         canvas.addEventListener('mousemove', move); canvas.addEventListener('touchmove', (e)=>{move(e); e.preventDefault();}, {passive:false});
         function move(e) { if(!drawing) return; const {x,y}=getPos(e); ctx.lineTo(x,y); ctx.strokeStyle=curColor; ctx.lineWidth=curSize; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(); }
         window.addEventListener('mouseup', ()=>{if(drawing)save(); drawing=false;});
         window.addEventListener('touchend', ()=>{if(drawing)save(); drawing=false;});
+
         function getAIResponse(mood, desc) {
-            const dangerWords = ["自殺", "想死", "解脫", "沒意義", "絕望", "自殘", "不想活"];
-            if (dangerWords.some(w => desc.includes(w))) return { title: "❤️ 溫馨關懷", text: "我看見了你畫中的沉重...辛苦你了。請記得你並不孤單，撥打 1925，讓我們陪你一起面對。", color: "#eb4d4b" };
-            const lib = {"喜": "這線條充滿活力！快樂的能量真的很有感染力！☀️", "怒": "很有張力的表達！你成功將澎湃能量轉化為筆觸，超棒！🔥", "哀": "畫作有種安靜的深度。每一筆都在溫柔擁抱你自己。🕯️", "樂": "太燦爛了！輕快繽紛的節奏讓心情也跟著亮了起來！🌈"};
-            return { title: "🌟 AI 觀察筆記", text: lib[mood], color: "#f1c40f" };
+            const dangerWords = ["自殺", "想死", "離開世界", "解脫", "沒意義", "絕望", "自殘", "不想活"];
+            if (dangerWords.some(w => desc.includes(w))) {
+                return { title: "❤️ 溫馨關懷", text: "感受到你現在正承受著沉重的壓力...辛苦你了。請記得你並不孤單，撥打 1925 讓有人陪你一起面對這份心情。", color: "#ff7675" };
+            }
+            const normal = {
+                "喜": "你的線條真活潑！這份快樂的能量完全傳達出來了！☀️",
+                "怒": "很有衝擊力的表達！成功將澎湃的能量轉化為筆觸，太棒了！🔥",
+                "哀": "這幅畫有種安靜的深度。每一筆線條都在溫柔地跟自己對話，辛苦了。🕯️",
+                "樂": "太棒了！這種輕快且繽紛的感覺，讓看畫的人心情也跟著明亮了！🌈"
+            };
+            return { title: "🌟 AI 觀察筆記", text: normal[mood], color: "#f1c40f" };
         }
+
         function checkAndNext() {
             const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value.trim();
-            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並完成繪圖！");
-            finalData.push({ id: sid, age: age, gender: document.getElementById('gender').value, group: "AI", mood: moods[step], color_h: document.getElementById('colorSlider').value, desc: desc, time: Math.round((Date.now()-startTime)/1000)+"s", image: canvas.toDataURL('image/jpeg', 0.4) });
-            const res = getAIResponse(moods[step], desc);
-            document.getElementById('fb-title').innerText = res.title; document.getElementById('fb-text').innerText = res.text; document.getElementById('fb-box').style.borderTop = `10px solid ${res.color}`; document.getElementById('fb-overlay').style.display = "block"; document.getElementById('fb-box').style.display = "block";
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並完成繪圖想法！");
+
+            const h = document.getElementById('colorSlider').value;
+            finalData.push({
+                id: sid, age: age, gender: document.getElementById('gender').value,
+                group: document.getElementById('exp-group').value,
+                mood: moods[step], 
+                color_hex: curColor, // 新增：紀錄色標 (HEX)
+                color_h: h,         // 新增：紀錄角度 (Degree)
+                desc: desc, time: Math.round((Date.now()-startTime)/1000)+"s",
+                image: canvas.toDataURL('image/jpeg', 0.5)
+            });
+
+            if (document.getElementById('exp-group').value === "AI") {
+                const res = getAIResponse(moods[step], desc);
+                document.getElementById('fb-title').innerText = res.title;
+                document.getElementById('fb-text').innerText = res.text;
+                document.getElementById('fb-box').style.borderTop = `10px solid ${res.color}`;
+                document.getElementById('fb-overlay').style.display = "block";
+                document.getElementById('fb-box').style.display = "block";
+            } else { goNext(); }
         }
-        function closeFB() { document.getElementById('fb-overlay').style.display = "none"; document.getElementById('fb-box').style.display = "none"; goNext(); }
-        function goNext() { if(step < 3) { step++; startTime = Date.now(); document.getElementById('mood-label').innerText = "心情：" + moods[step]; document.getElementById('setup-group').style.visibility = "hidden"; document.getElementById('mood-desc').value = ""; document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4) ✨`; clearCanvas(); history = []; save(); } else { submit(); } }
-        async function submit() { const btn = document.getElementById('action-btn'); btn.disabled = true; btn.innerText = "正在傳送實驗數據... 🚀"; for(let d of finalData) { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) }); } alert("🎉 數據已成功同步！"); location.reload(); }
+
+        function closeFB() {
+            document.getElementById('fb-overlay').style.display = "none";
+            document.getElementById('fb-box').style.display = "none";
+            goNext();
+        }
+
+        function goNext() {
+            if(step < 3) {
+                step++; startTime = Date.now();
+                document.getElementById('mood-label').innerText = "心情：" + moods[step];
+                document.getElementById('setup-group').style.visibility = "hidden";
+                document.getElementById('mood-desc').value = "";
+                document.getElementById('action-btn').innerText = `保存並繼續 (${step+1}/4) ✨`;
+                clearCanvas(); history=[]; save();
+            } else { submit(); }
+        }
+
+        async function submit() {
+            const btn = document.getElementById('action-btn');
+            btn.disabled = true; btn.innerText = "數據飛速同步中... 🚀";
+            try {
+                for(let d of finalData) {
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
+                }
+                alert("🎉 實驗數據已同步！感謝參與。");
+                location.reload();
+            } catch(e) {
+                alert("上傳失敗，請檢查網路！");
+                btn.disabled = false;
+            }
+        }
         updateBrush();
     </script>
 </body>
