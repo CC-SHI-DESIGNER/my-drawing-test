@@ -6,78 +6,109 @@
     <style>
         :root { --primary: #6c5ce7; --bg: #f1f3f6; }
         body { font-family: "PingFang TC", sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 520px; }
-        .progress-bar { display: flex; margin-bottom: 20px; background: #eee; border-radius: 10px; height: 6px; }
+        .card { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 550px; }
+        
+        /* 進度條 */
+        .progress-bar { display: flex; margin-bottom: 20px; background: #eee; border-radius: 10px; height: 8px; }
         .progress-inner { background: var(--primary); width: 25%; transition: 0.5s; border-radius: 10px; }
         
-        .step-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .mood-tag { font-size: 24px; font-weight: bold; color: var(--primary); background: #efecff; padding: 5px 20px; border-radius: 15px; }
+        .mood-tag { font-size: 26px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 15px; }
         
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .input-group input, .input-group select { flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; }
+        /* 強化版色盤 */
+        .color-palette { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .color-dot { width: 35px; height: 35px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
+        .color-dot.active { border-color: #333; transform: scale(1.1); }
+        .custom-color { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #ddd; overflow: hidden; cursor: pointer; }
 
-        .canvas-box { border: 3px solid #eee; border-radius: 20px; background: white; cursor: url('https://cdn-icons-png.flaticon.com/32/595/595582.png') 0 32, crosshair; position: relative; }
-        canvas { display: block; width: 100%; touch-action: none; border-radius: 17px; }
+        /* 畫布區域 */
+        .canvas-box { border: 3px solid #eee; border-radius: 20px; background: white; position: relative; overflow: hidden; }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            touch-action: none; 
+            /* 1. 修改畫筆圖標：使用一隻可愛的畫筆圖案 */
+            cursor: url('https://cdn-icons-png.flaticon.com/32/595/595582.png') 0 32, crosshair; 
+        }
         
-        .toolbar { display: flex; gap: 15px; padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; align-items: center; border-radius: 17px 17px 0 0; }
+        .toolbar { display: flex; padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; align-items: center; }
         
-        #mood-desc { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; margin: 15px 0; box-sizing: border-box; resize: none; font-size: 15px; }
-        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.3s; }
-        .btn-next:hover { background: #5b4cc4; transform: translateY(-2px); }
+        #mood-desc { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; margin: 15px 0; box-sizing: border-box; resize: none; font-size: 15px; outline: none; }
+        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; cursor: pointer; font-weight: bold; font-size: 18px; }
         
-        #saving-overlay { display: none; text-align: center; padding: 20px; color: var(--primary); font-weight: bold; }
+        /* AI 回饋方框 */
+        #ai-res { display: none; margin-top: 20px; padding: 20px; background: #fff9db; border-radius: 15px; border-left: 6px solid #f1c40f; line-height: 1.6; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="progress-bar"><div class="progress-inner" id="progress"></div></div>
         
-        <div id="user-setup">
-            <div class="input-group">
-                <input type="text" id="sid" placeholder="輸入學號">
-                <select id="gender"><option value="女">女</option><option value="男">男</option></select>
-            </div>
+        <div id="setup-ui" style="display:flex; gap:10px; margin-bottom:15px;">
+            <input type="text" id="sid" placeholder="輸入學號" style="flex:2; padding:10px; border-radius:10px; border:1px solid #eee;">
+            <select id="gender" style="flex:1; padding:10px; border-radius:10px; border:1px solid #eee;">
+                <option value="女">女</option>
+                <option value="男">男</option>
+            </select>
         </div>
 
-        <div class="step-info">
-            <div class="mood-tag" id="mood-label">喜</div>
-            <div style="font-size: 12px; color: #999;">Step <span id="step-num">1</span> of 4</div>
+        <div class="mood-tag" id="mood-label">喜</div>
+
+        <div class="color-palette" id="palette">
+            <div class="color-dot active" style="background:#ff7675;" onclick="pickColor('#ff7675', this)"></div>
+            <div class="color-dot" style="background:#fdcb6e;" onclick="pickColor('#fdcb6e', this)"></div>
+            <div class="color-dot" style="background:#55efc4;" onclick="pickColor('#55efc4', this)"></div>
+            <div class="color-dot" style="background:#74b9ff;" onclick="pickColor('#74b9ff', this)"></div>
+            <div class="color-dot" style="background:#a29bfe;" onclick="pickColor('#a29bfe', this)"></div>
+            <div class="color-dot" style="background:#2d3436;" onclick="pickColor('#2d3436', this)"></div>
+            <input type="color" id="customColorPicker" class="custom-color" onchange="pickColor(this.value, this)">
         </div>
 
         <div class="canvas-box">
             <div class="toolbar">
-                <input type="color" id="color" value="#1a1a1a">
-                <span style="font-size: 13px;">請用線條描繪這個情緒...</span>
-                <button onclick="clearCanvas()" style="margin-left:auto; background:none; border:none; color:#999; cursor:pointer;">♻️ 清空</button>
+                <span style="font-size: 13px; color:#888;">請用線條或圖像描繪情緒...</span>
+                <button onclick="clearCanvas()" style="margin-left:auto; border:none; background:none; color:var(--primary); cursor:pointer;">♻️ 清空</button>
             </div>
-            <canvas id="canvas" width="460" height="340"></canvas>
+            <canvas id="canvas" width="490" height="350"></canvas>
         </div>
 
-        <textarea id="mood-desc" rows="2" placeholder="簡單描述一下這幅畫的内容與情緒的關聯..."></textarea>
+        <textarea id="mood-desc" rows="2" placeholder="為什麼會畫這些線條或圖像呢？"></textarea>
 
-        <button class="btn-next" id="action-btn" onclick="nextStep()">確認，存檔並繼續 ✨</button>
-        <div id="saving-overlay">數據與圖像同步中，請稍候... 🚀</div>
+        <button class="btn-next" id="action-btn" onclick="nextStep()">保存當前情緒，繼續 ✨</button>
+        
+        <div id="ai-res"></div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby39jbeTZVhuMbwaxu_zbMneIRZJdZe8MozfJfuBWp2_x6eET1-3l6XQft0bTGTjGEL-Q/exec";
+        const SCRIPT_URL = "在此貼上你的GoogleScript網址";
         const moods = ["喜", "怒", "哀", "樂"];
+        const aiFeedbacks = {
+            "喜": "陽光般的線條！你的筆觸跳動著愉悅的旋律呢～✨",
+            "怒": "強烈而有力！這些線條準確地捕捉到了爆發的能量！🔥",
+            "哀": "溫柔而安靜，線條中帶著一種深邃的詩意...🕯️",
+            "樂": "和諧的構圖！感覺心情都跟著你的畫作飛揚了起來～🌈"
+        };
+
         let step = 0;
         let finalData = [];
         let startTime = Date.now();
+        let selectedColor = "#ff7675";
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let drawing = false;
 
-        // 初始化畫布背景為白
         function clearCanvas() {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         clearCanvas();
 
-        // 平滑繪圖邏輯
+        function pickColor(c, el) {
+            selectedColor = c;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            if(el.classList) el.classList.add('active');
+        }
+
         canvas.addEventListener('mousedown', (e) => { 
             drawing = true;
             ctx.beginPath();
@@ -88,7 +119,7 @@
             if(!drawing) return;
             const r = canvas.getBoundingClientRect();
             ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
-            ctx.strokeStyle = document.getElementById('color').value;
+            ctx.strokeStyle = selectedColor;
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -98,31 +129,31 @@
 
         async function nextStep() {
             const sid = document.getElementById('sid').value;
-            if(!sid) return alert("請先輸入學號！");
+            if(!sid) return alert("請填寫學號！");
 
-            // 捕捉畫面轉為 Base64 圖片字串
-            const imageData = canvas.toDataURL('image/jpeg', 0.5); // 壓縮品質 0.5 減小體積
+            const imageData = canvas.toDataURL('image/jpeg', 0.5);
             const duration = Math.round((Date.now() - startTime) / 1000);
 
             finalData.push({
                 id: sid,
                 gender: document.getElementById('gender').value,
                 mood_tag: moods[step],
-                color: document.getElementById('color').value,
+                color: selectedColor,
                 description: document.getElementById('mood-desc').value,
                 time_spent: duration + "s",
-                image: imageData // 這是圖片數據！
+                image: imageData,
+                ai_fb: aiFeedbacks[moods[step]]
             });
 
             if(step < 3) {
                 step++;
                 startTime = Date.now();
                 document.getElementById('mood-label').innerText = moods[step];
-                document.getElementById('step-num').innerText = step + 1;
                 document.getElementById('progress').style.width = ((step + 1) * 25) + "%";
-                document.getElementById('user-setup').style.visibility = "hidden";
+                document.getElementById('setup-ui').style.visibility = "hidden";
                 document.getElementById('mood-desc').value = "";
                 clearCanvas();
+                if(step === 3) document.getElementById('action-btn').innerText = "送出所有實驗數據 ✨";
             } else {
                 submitFinal();
             }
@@ -130,9 +161,8 @@
 
         async function submitFinal() {
             const btn = document.getElementById('action-btn');
-            const overlay = document.getElementById('saving-overlay');
-            btn.style.display = "none";
-            overlay.style.display = "block";
+            btn.disabled = true;
+            btn.innerText = "正在同步實驗數據... 🚀";
 
             for(let item of finalData) {
                 await fetch(SCRIPT_URL, {
@@ -142,8 +172,13 @@
                 });
             }
 
-            alert("全部情緒已繪製完成！感謝參與。");
-            location.reload(); // 實驗結束重整
+            // 顯示最終綜合 AI 回饋
+            const aiRes = document.getElementById('ai-res');
+            aiRes.style.display = "block";
+            aiRes.innerHTML = "<strong>【情緒調色盤總結】</strong><br>太棒了！你完成了一次深度的自我探索。你用繽紛的色彩與筆觸記錄了喜、怒、哀、樂。每一條曲線都是心靈的軌跡，老師會好好珍惜這些寶貴的數據！💖";
+            
+            btn.innerText = "實驗已全部完成！";
+            alert("提交成功！");
         }
     </script>
 </body>
