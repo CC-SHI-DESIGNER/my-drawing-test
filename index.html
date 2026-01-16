@@ -1,167 +1,61 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>情緒視覺實驗室 V5.0</title>
-    <style>
-        :root { --primary: #6c5ce7; --bg: #f8f9fa; }
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .card { background: white; width: 100%; max-width: 600px; margin: 10px; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
-        .setup-ui { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        input, select, textarea { font-size: 16px !important; padding: 12px; border: 2px solid #f0f0f0; border-radius: 12px; outline: none; }
-        .mood-tag { font-size: 28px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; }
-        .controls-group { background: #fdfdfd; padding: 15px; border-radius: 20px; border: 1px solid #eee; margin-bottom: 15px; }
-        .control-item { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
-        #colorSlider { flex: 1; -webkit-appearance: none; height: 12px; border-radius: 10px; background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%); }
-        .canvas-container { position: relative; border: 2px solid #f0f0f0; border-radius: 20px; background: white; overflow: hidden; }
-        canvas { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
-        .toolbar { display: flex; padding: 10px; background: #fafafa; border-bottom: 1px solid #eee; justify-content: space-between; }
-        .tool-btn { border: none; background: #eee; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; }
-        .btn-next { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div id="setup-group" class="setup-ui">
-            <input type="text" id="sid" placeholder="學號" style="flex:2;">
-            <input type="number" id="age" placeholder="年齡" style="flex:1;">
-            <select id="gender" style="flex:1;"><option value="女">女</option><option value="男">男</option></select>
-        </div>
+// --- 核心邏輯：情緒與危機偵測 ---
+function processFeedback(mood, desc) {
+    // 1. 定義危險關鍵字
+    const dangerWords = ["自殺", "想死", "離開世界", "解脫", "沒意義", "絕望", "痛苦到極點"];
+    const isCrisis = dangerWords.some(word => desc.includes(word));
 
-        <div class="mood-tag" id="mood-label">心情：喜</div>
+    if (isCrisis) {
+        // 觸發防自殺與深度關懷機制
+        return {
+            title: "💡 溫暖的小提醒",
+            text: "看見你這幅畫，能感受到你現在承受著很大的重量... 辛苦你了。這份情緒是真實的，但也請記得，你並不孤單。試著傳個訊息給最信任的朋友，或是撥打 1925 (依政府熱線)，讓有人能陪你分擔這一刻。你的生命如同你選的顏色一樣，有無窮的可能性。",
+            style: "border-left: 8px solid #ff7675; background: #fff5f5;"
+        };
+    }
 
-        <div class="controls-group">
-            <div class="control-item">
-                <input type="range" id="colorSlider" min="0" max="360" value="0" oninput="updateBrush()">
-            </div>
-            <div class="control-item">
-                <span style="font-size:12px;">筆觸</span>
-                <input type="range" id="sizeSlider" min="1" max="40" value="5" oninput="updateBrush()" style="flex:1;">
-                <div style="width:30px; display:flex; justify-content:center;"><div id="brushIndicator"></div></div>
-            </div>
-        </div>
+    // 2. 一般激勵機制 (AI 回饋組)
+    const normalizedFeedbacks = {
+        "喜": "這抹色彩真耀眼！你的筆觸像是帶著笑意在跳舞，連螢幕前的我也感受到這份能量了呢！☀️",
+        "怒": "很有張力的表達！你成功把那種噴發的能量轉化為視覺藝術，這是一個超棒的抒發過程！🔥",
+        "哀": "這幅畫有種靜謐的美。雖然線條帶著淡淡的憂傷，但也是在溫柔地擁抱內心的自己。抱一個，你做得很棒。🕯️",
+        "樂": "太燦爛了！這種構圖讓人看了心情也跟著輕快起來。謝謝你分享這麼美好的視覺節奏！🌈"
+    };
 
-        <div class="canvas-container">
-            <div class="toolbar">
-                <button class="tool-btn" onclick="undo()" style="background:#ffeaa7;">⬅️ 復原</button>
-                <button class="tool-btn" onclick="clearCanvas()" style="background:#fab1a0;">♻️ 全清</button>
-            </div>
-            <canvas id="canvas"></canvas>
-        </div>
+    return {
+        title: "🌟 AI 觀察筆記",
+        text: normalizedFeedbacks[mood] || "你的表達很有獨特性！",
+        style: "border-left: 8px solid #f1c40f; background: #fff9db;"
+    };
+}
 
-        <textarea id="mood-desc" rows="2" placeholder="請簡單描述畫作內容，比如綫條或色彩的構思（必填）..." style="width:100%; margin-top:10px;"></textarea>
+// --- 更新後的跳轉邏輯 ---
+function nextStep() {
+    const sid = document.getElementById('sid').value;
+    const age = document.getElementById('age').value;
+    const desc = document.getElementById('mood-desc').value.trim();
 
-        <button class="btn-next" id="action-btn" onclick="nextStep()">保存並繼續 (1/4) ✨</button>
-    </div>
+    if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完成所有填寫與繪圖！");
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNOO9SSG9GVc4t2wMcdMFbdrxqJxi6XKfF2OtwUO5Smmoz6yaR6Fqq5v3c4_Qhn9taIg/exec";
-        const moods = ["喜", "怒", "哀", "樂"];
-        let step = 0, finalData = [], startTime = Date.now(), curColor = "red", curSize = 5, historyStack = [], hasDrawn = false, drawing = false;
+    const currentMood = moods[step];
+    const fbData = processFeedback(currentMood, desc);
 
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const brushInd = document.getElementById('brushIndicator');
+    finalData.push({
+        id: sid, age: age, gender: document.getElementById('gender').value,
+        group: document.getElementById('group-type').value,
+        mood_tag: currentMood, color_h: document.getElementById('colorSlider').value,
+        description: desc, time: Math.round((Date.now()-startTime)/1000)+"s",
+        image: canvas.toDataURL('image/jpeg', 0.5)
+    });
 
-        function updateBrush() {
-            const hue = document.getElementById('colorSlider').value;
-            curSize = document.getElementById('sizeSlider').value;
-            curColor = `hsl(${hue}, 70%, 50%)`;
-            brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`;
-        }
-
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientWidth * 0.75;
-            clearCanvas();
-        }
-        window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 100);
-
-        function clearCanvas() {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            saveHistory();
-            hasDrawn = false;
-        }
-
-        function saveHistory() { historyStack.push(canvas.toDataURL()); if(historyStack.length > 20) historyStack.shift(); }
-        function undo() {
-            if (historyStack.length > 1) {
-                historyStack.pop();
-                let img = new Image();
-                img.src = historyStack[historyStack.length - 1];
-                img.onload = () => { ctx.drawImage(img, 0, 0); };
-            }
-        }
-
-        function getPos(e) {
-            const r = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - r.left, y: clientY - r.top };
-        }
-
-        canvas.addEventListener('mousedown', start);
-        canvas.addEventListener('touchstart', (e) => { start(e); e.preventDefault(); }, {passive: false});
-        function start(e) { drawing = true; hasDrawn = true; const { x, y } = getPos(e); ctx.beginPath(); ctx.moveTo(x, y); }
-        canvas.addEventListener('mousemove', move);
-        canvas.addEventListener('touchmove', (e) => { move(e); e.preventDefault(); }, {passive: false});
-        function move(e) { if(!drawing) return; const { x, y } = getPos(e); ctx.lineTo(x, y); ctx.strokeStyle = curColor; ctx.lineWidth = curSize; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); }
-        window.addEventListener('mouseup', () => { if(drawing) saveHistory(); drawing = false; });
-        window.addEventListener('touchend', () => { if(drawing) saveHistory(); drawing = false; });
-
-        async function nextStep() {
-            const sid = document.getElementById('sid').value;
-            const age = document.getElementById('age').value;
-            const desc = document.getElementById('mood-desc').value.trim();
-
-            if(!sid || !age) return alert("請填寫學號和年齡！");
-            if(!hasDrawn) return alert("請畫出情緒線條！");
-            if(desc.length < 2) return alert("請描述你的畫作內容。");
-
-            finalData.push({
-                id: sid, age: age, gender: document.getElementById('gender').value,
-                mood_tag: moods[step], color: curColor, description: desc,
-                time_spent: Math.round((Date.now()-startTime)/1000)+"s",
-                image: canvas.toDataURL('image/jpeg', 0.5)
-            });
-
-            if(step < 3) {
-                step++; startTime = Date.now();
-                document.getElementById('mood-label').innerText = "心情：" + moods[step];
-                document.getElementById('setup-group').style.display = "none";
-                document.getElementById('mood-desc').value = "";
-                document.getElementById('action-btn').innerText = `保存並繼續 (${step + 1}/4) ✨`;
-                clearCanvas();
-                historyStack = []; saveHistory();
-            } else {
-                submitFinal();
-            }
-        }
-
-        async function submitFinal() {
-            const btn = document.getElementById('action-btn');
-            btn.disabled = true;
-            btn.innerText = "正在傳送數據... 🚀";
-
-            for(let item of finalData) {
-                // 使用封裝後的 fetch，確保跨域請求正確
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item)
-                });
-            }
-            alert("數據已全數成功上傳！感謝參與。");
-            btn.innerText = "實驗完成";
-        }
-        updateBrush();
-    </script>
-</body>
-</html>
+    if (document.getElementById('group-type').value === "AI") {
+        const fbBox = document.getElementById('feedback-box');
+        document.getElementById('fb-title').innerText = fbData.title;
+        document.getElementById('fb-text').innerText = fbData.text;
+        fbBox.style.cssText += fbData.style; // 套用特殊樣式
+        
+        document.getElementById('overlay').style.display = "block";
+        fbBox.style.display = "block";
+    } else {
+        processNext(); 
+    }
+}
