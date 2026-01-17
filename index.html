@@ -34,9 +34,9 @@
 <body>
     <div id="fb-overlay"></div>
     <div id="fb-box">
-        <h2 id="fb-title">🌟 AI 鼓勵師</h2>
+        <h2 id="fb-title">🌟 AI 觀察筆記</h2>
         <p id="fb-text" style="font-size: 18px; line-height:1.6; color:#444; margin: 20px 0;"></p>
-        <button onclick="closeFB()" class="btn-next">收到，下一關！🚀</button>
+        <button onclick="closeFB()" class="btn-next">收到了，下一關！🚀</button>
     </div>
 
     <div class="card">
@@ -55,7 +55,7 @@
 
         <div class="controls-group">
             <div class="control-item">
-                <span style="font-size:13px; font-weight:bold;">色彩選擇</span>
+                <span style="font-size:13px; font-weight:bold;">標準色票</span>
                 <input type="range" id="colorSlider" min="0" max="330" step="30" value="0" oninput="updateBrush()">
             </div>
             <div class="control-item">
@@ -79,10 +79,13 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzc0In13VMilxTtK-_INDFNK9Qi91c8YN5e23K1rhNfkwLs0oZh4LPK6Az_fdML1UTpgg/exec"; 
+        // ---------------------------------------------------------
+        // 重要：請務必將下方的網址替換為你重新部署後的「網頁應用程式網址」
+        // ---------------------------------------------------------
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdBAI8a9-x8w4gC-Q97RTj43hvdIo0GXbWkorHxdBKGH6ylP3hesM2VUAo77sKftg6ew/exec"; 
+
         const moods = ["喜", "怒", "哀", "樂"];
         
-        // --- 核心工具：HSL 轉 HEX ---
         function hslToHex(h, s, l) {
             l /= 100;
             const a = s * Math.min(l, 1 - l) / 100;
@@ -95,8 +98,7 @@
         }
 
         let activeTime = 0, lastTs = 0;
-        let colorSeq = []; // 存儲標準 HEX 色票
-        
+        let colorSeq = []; 
         let step = 0, finalData = [], curColor = "#FF0000", curH = 0, curSize = 6, history = [], hasDrawn = false, drawing = false;
 
         const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), brushInd = document.getElementById('brushInd');
@@ -104,7 +106,7 @@
         function updateBrush() {
             curH = parseInt(document.getElementById('colorSlider').value);
             curSize = document.getElementById('sizeSlider').value;
-            curColor = hslToHex(curH, 85, 50); // 轉換為 HEX
+            curColor = hslToHex(curH, 85, 50);
             brushInd.style.cssText = `width:${curSize}px; height:${curSize}px; background:${curColor}; border-radius:50%;`;
             document.getElementById('color-code').innerText = curColor;
         }
@@ -118,15 +120,7 @@
         }
 
         function save() { history.push(canvas.toDataURL()); if(history.length>15) history.shift(); }
-        
-        function undo() { 
-            if(history.length>1) { 
-                history.pop(); 
-                let img=new Image(); 
-                img.src=history[history.length-1]; 
-                img.onload=()=>ctx.drawImage(img,0,0); 
-            } 
-        }
+        function undo() { if(history.length>1) { history.pop(); let img=new Image(); img.src=history[history.length-1]; img.onload=()=>ctx.drawImage(img,0,0); } }
 
         function getPos(e) { 
             const r = canvas.getBoundingClientRect(), c = e.touches ? e.touches[0] : e;
@@ -135,7 +129,6 @@
 
         function start(e) { 
             drawing=true; hasDrawn=true; lastTs = Date.now(); 
-            // 記錄當前 HEX 到序列 (如果跟上一個色票不同)
             if (colorSeq[colorSeq.length-1] !== curColor) { colorSeq.push(curColor); }
             const {x,y}=getPos(e); ctx.beginPath(); ctx.moveTo(x,y); 
         }
@@ -158,20 +151,20 @@
 
         function checkAndNext() {
             const sid = document.getElementById('sid').value, age = document.getElementById('age').value, desc = document.getElementById('mood-desc').value.trim();
-            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫並完成繪圖！");
+            if(!sid || !age || !hasDrawn || desc.length < 2) return alert("請完整填寫資料與繪圖！");
 
             finalData.push({
                 id: sid, age: age, gender: document.getElementById('gender').value,
                 group: document.getElementById('exp-group').value,
                 mood: moods[step], 
-                color_seq: colorSeq.join(", "), // 存儲標準 HEX 色票序列如 "#FF0000, #4A90E2"
+                color_seq: colorSeq.join(", "), 
                 active_time: activeTime.toFixed(1),
                 desc: desc, 
                 image: canvas.toDataURL('image/jpeg', 0.4)
             });
 
             if (document.getElementById('exp-group').value === "AI") {
-                const lib = { "喜":"色彩很有活力！☀️", "怒":"很有爆發力！🔥", "哀":"安靜的力量。🕯️", "樂":"心情變好了！🌈" };
+                const lib = { "喜":"色彩很有活力的感覺！☀️", "怒":"筆觸很有張力呢！🔥", "哀":"感受到安靜的能量。🕯️", "樂":"畫作讓心情變好了！🌈" };
                 document.getElementById('fb-text').innerText = lib[moods[step]];
                 document.getElementById('fb-overlay').style.display = "block";
                 document.getElementById('fb-box').style.display = "block";
@@ -193,17 +186,26 @@
 
         async function submit() {
             const btn = document.getElementById('action-btn');
-            btn.disabled = true; btn.innerText = "正在傳送實驗數據... 🚀";
+            btn.disabled = true; btn.innerText = "數據同步中... 🚀";
+            
+            // 如果網址沒填，直接提醒
+            if(SCRIPT_URL.includes("你的網址")) {
+                alert("錯誤：你尚未在代碼中填入 GAS 的網址！");
+                btn.disabled = false; return;
+            }
+
             try {
                 for(let data of finalData) {
                     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
                 }
-                alert("🎉 數據已成功同步！");
+                alert("🎉 數據已成功同步！感謝參與。");
                 location.reload();
-            } catch(e) { alert("傳送失敗！"); btn.disabled = false; }
+            } catch(e) { 
+                alert("傳送失敗：可能是網路問題或 GAS 權限未開放！"); 
+                btn.disabled = false; 
+            }
         }
         updateBrush();
     </script>
 </body>
 </html>
-
